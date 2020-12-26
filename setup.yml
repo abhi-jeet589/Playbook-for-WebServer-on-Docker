@@ -1,0 +1,83 @@
+- hosts: 192.168.0.107
+  tasks:
+  - name: "Copy ISO file from CN to MN"
+    copy:
+      src: "/root/rhel-8.0-x86_64-dvd.iso"
+      dest: "/RHEL-8-packages"
+
+  - name: "Create a directory for mount point"
+    file:
+      path: "/dvd1"
+      state: directory
+
+  - name: "Mount the ISO file to the directory created"
+    mount:
+      path: "/dvd1"
+      src: "/RHEL-8-packages"
+      fstype: "iso9660"
+      state: mounted
+
+  - name: "Configure yum for AppStream"
+    yum_repository:
+      name: "AppStream"
+      description: "Yum repo for Appstream"
+      baseurl: "file:///dvd1/AppStream"
+      enabled: yes
+      gpgcheck: no
+
+      
+  - name: "Configure yum for BaseOS"
+    yum_repository:
+      name: "BaseOS"
+      description: "Yum repo for BaseOS"
+      baseurl: "file:///dvd1/BaseOS"
+      enabled: yes
+      gpgcheck: no
+
+  - name: "Configure yum for Docker"
+    yum_repository:
+      name: "Docker"
+      description: "Yum repo for Docker"
+      baseurl: "https://download.docker.com/linux/centos/7/x86_64/stable/"
+      enabled: yes
+      gpgcheck: no
+
+  - name: "Install docker"
+    shell: "yum install docker-ce --nobest"
+
+  - name: "Start Docker service"
+    service:
+      name: "docker"
+      state: started
+
+  - name: "Install pip module for docker"
+    pip:
+      name: "docker"
+      state: present
+
+  - name: "Pull httpd image from docker hub"
+    docker_image:
+      name: "httpd"
+      source: pull
+
+  - name: "Create a directory to store the webpages"
+    file:
+      path: "/home/website"
+      state: directory
+
+  - name: "Copy webpages to a folder"
+    copy:
+      src: "/task10/index.html"
+      dest: "/home/website/index.html"
+
+  - name: "Launch docker container"
+    docker_container:
+      name: "webserver"
+      image: "httpd"
+      state: started
+      ports:
+       - "8080:80"
+      volumes:
+       - "/home/website/:/usr/local/apache2/htdocs/"
+
+  

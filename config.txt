@@ -1,0 +1,1 @@
+192.168.0.107 ansible_user=root ansible_password=redhat ansible_connection=ssh
